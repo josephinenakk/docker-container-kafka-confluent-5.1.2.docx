@@ -1,0 +1,74 @@
+Docker Kafka container : 
+basecontainer is docker container from fedora/apache image with all tools and java installed
+A) Download confluent and extact tar file in /opt 
+	1.[root@www.mamonir.com josephine]# cd /opt/
+ 	2. [root@www.mamonir.com opt]# wget http://packages.confluent.io/archive/5.1/confluent-5.1.2-2.11.tar.gz
+ 	3. [root@www.mamonir.com opt]# tar -xzvf confluent-5.1.2-2.11.tar.gz
+B) With basecontainer(local image kafka-5.1.2(original fedora/apache))
+1.commit and tag the container to save
+[root@www.mamonir.com josephine]#docker tag d096f3302872 kafka-5.1.2
+        (kafka-5.1.2 image base fadora/apache install all necessary tool and java-1.8)
+2. run the container with port open 2181 and 9092
+              [root@www.mamonir.com josephine]# docker run -it -p 2181:2181 -p 9092:9092 --name kafka -h kafka.mamonir.com -v  /opt/confluent:/opt  kafka-5.1.2 /bin/bash
+
+Normal kafka workflow:
+1) start zookeeper
+2) start kafka
+3) create  a topic 
+4) start producer 
+5) start consumer      from putty
+ 1. In first putty terminal: connect to container kafka
+ a) To see container kafka running
+    [root@www.mamonir.com josephine]#docker ps
+ b) if it is running 
+   [root@www.mamonir.com josephine]#docker attach kafka
+ or [root@www.mamonir.com josephine]#docker start kafka 
+    [root@www.mamonir.com josephine]#docker attach kafka
+2. start  zookeeper server:
+ 	a)To start zookeeper-server:
+      	  [root@kafka bin]#  ./zookeeper-server-start  -daemon ../etc/kafka/zookeeper.properties
+        ( if port 0.0.0.0/0.0.0.0:2181 is seen in output press ctrl-c and run below)
+b) To start zookeeper-daemon:
+	   [root@kafka bin]#  ./zookeeper-server-start  -daemon ../etc/kafka/zookeeper.properties
+
+ 	c) Run netstat command to ensure zookeeper running in 2181
+           [root@kafka bin]# netstat -anp|grep  2181
+
+	tcp6       0      0 :::2181                 :::*                    LISTEN      15418/java
+3. kafka start:
+	a) To start kafka-server:
+             [root@kafka bin]# ./kafka-server-start ../etc/kafka/server.properties
+         (if socket connections on 0.0.0.0:9092. is seen in output press ctrl-c and run below)
+b) To start kafka-daemon
+              [root@kafka bin]# ./kafka-server-start -daemon   ../etc/kafka/server.properties
+	 c) Run netstat command to ensure kafka running in 9092
+	[root@kafka bin]# netstat -anp|grep  9092
+	tcp6       0      0 :::9092                 :::*                    LISTEN      15656/java
+4) create a topic:
+               [root@kafka bin]# ./kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic poctopic
+Created topic "poctopic".
+
+
+
+5) kafka-console-producer
+In second putty terminal:connect to josephine and goto /opt/confluent/confluent-5.1.2/bin
+go to /opt/confluent/confluent-5.1.2/bin
+	
+a.	[josephine@www.kshounish.com ~]$ ssh www.mamonir.com
+b.	josephine@www.mamonir.com ~]$ sudo su
+c.	root@www.mamonir.com josephine]# cd /opt/confluent/confluent-5.1.2/bin
+ [root@www.mamonir.com bin]# ./kafka-console-producer --broker-list localhost:9092 --topic poctopic
+>
+ls
+6) kafka-console-consumer
+In Third putty terminal:connect to josephine and goto /opt/confluent/confluent-5.1.2/bin
+steps:
+	
+d.	[josephine@www.kshounish.com ~]$ ssh www.mamonir.com
+e.	josephine@www.mamonir.com ~]$ sudo su
+f.	root@www.mamonir.com josephine]# cd /opt/confluent/confluent-5.1.2/bin
+	
+ [root@www.mamonir.com bin]# ./kafka-console-consumer --bootstrap-server localhost:9092 --topic poctopic --from-beginning
+……
+ you will get masages here 
+ls
